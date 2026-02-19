@@ -21,8 +21,8 @@ build-and-push:
     - docker context use tls-context
     - docker buildx create tls-context --name ci-builder --driver docker-container --use || true
     - docker buildx inspect --bootstrap
-    - git config user.name "$GITLAB_USER_NAME"
-    - git config user.email "$GITLAB_USER_EMAIL"
+    - git config user.name "$(git config --get user.name)"
+    - git config user.email "$(git config --get user.email)"
   script:
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
