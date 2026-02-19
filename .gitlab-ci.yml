@@ -15,7 +15,7 @@ build-and-push:
   stage: build
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker buildx create --use --name ci-builder || true
+    - docker buildx create --use --name ci-builder --driver docker-container || true
     - docker buildx inspect --bootstrap
   script:
     - |
