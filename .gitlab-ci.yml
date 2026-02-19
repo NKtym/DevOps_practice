@@ -16,7 +16,7 @@ stages:
 build-and-push:
   stage: build
   before_script:
-    - apt-get update && apt-get install git
+    - apk add git
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker context create tls-context || true
     - docker context use tls-context
