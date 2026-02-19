@@ -1,0 +1,6 @@
+[user]
+    name = iv222s03
+    email = iv222s03@csc.sibsutis.ru
+
+[core]
+    sshCommand = ssh -i /home/youruser/.ssh/id_ed25519_hawk -o IdentitiesOnly=yes

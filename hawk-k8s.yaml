@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    server: https://api.hawk.csc.sibsutis.ru:6446
+    insecure-skip-tls-verify: true
+  name: hawk-dev
+- cluster:
+    server: https://api.hawk.csc.sibsutis.ru:6445
+    insecure-skip-tls-verify: true
+  name: hawk
+users:
+- name: iv222s03
+  user:
+    auth-provider:
+      config:
+        client-id: dex-hawk-all-in-one-1
+        client-secret: wl7F2XeGZSKlsdJJh35AwiQIL2CBaVwv1NEHtnzetXqV8tzi
+        id-token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjE4MzFkZTlmN2NiOGZiOTEzNjA3NzJlMzYwMjRkNGI1MzM2OWNkNjIifQ.eyJpc3MiOiJodHRwczovL2RleC5oYXdrLmNzYy5zaWJzdXRpcy5ydSIsInN1YiI6IkNrRjFhV1E5YVhZeU1qSnpNRE1zWTI0OWRYTmxjbk1zWTI0OVlXTmpiM1Z1ZEhNc1pHTTlhWEJoTEdSalBXTnpZeXhrWXoxemFXSnpkWFJwY3l4a1l6MXlkUklFYkdSaGNBIiwiYXVkIjoiZGV4LWhhd2stYWxsLWluLW9uZS0xIiwiZXhwIjoxNzcwNDU4NjA0LCJpYXQiOjE3NzAzNzIyMDQsImF0X2hhc2giOiJVVkt3MUZkMkFCdGNzNWFDWmt3cG13IiwiY19oYXNoIjoibl9fSF9EbER2ajZwM0J4WFdBeVFPdyIsImVtYWlsIjoiaXYyMjJzMDNAY3NjLnNpYnN1dGlzLnJ1IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImdyb3VwcyI6WyJpdjIyMiIsImhhd2stYWNjZXNzIl0sIm5hbWUiOiJpdjIyMnMwMyIsInByZWZlcnJlZF91c2VybmFtZSI6Iml2MjIyczAzIn0.gw44zu0OdRiD70nFzePHTu2UJR1fyr0q_CaUk6AOhTn4nrtqHCVYYSVzvAL7Hpcwlzngn5zuH2YDneENACQHT055vkPS8Su-njgO0gYMZZeqTvs7KvI4vLKNob0zucuOJL7OIOo8AMsT0sjNqv1iDKgIBIQZSTbwyBGsfwQzcyayLX9c-26AQ-wc_vi2Fyq_EvP4nubKLxiw2LSIev_kjnIZlnVFoytKcKcKpJrWTJ5wHvmw9SGACOXyhQt6Q90V3hztg5hZNyc7c_SlxhK7yMst2Kc8oiRIgYiuXIq_FKLBwU2W1SKijjtb6fbptVh51iQieuHGsPdv2aNl4-_7ew
+        idp-issuer-url: https://dex.hawk.csc.sibsutis.ru
+        refresh-token: ChlkaHpiY3NnbnBqMjNueGFjamJ6eXp6dzIyEhlveGlhZXV0MmdwNGRibnJhZWcyMmtndDJ1
+      name: oidc
+contexts:
+- context:
+    cluster: hawk-dev
+    user: iv222s03
+  name: hawk-dev
+- context:
+    cluster: hawk
+    user: iv222s03
+  name: hawk
+current-context: hawk-dev

@@ -1,0 +1,6 @@
+[user]
+    name = Городилов Павел Алексеевич
+    email = Pasha04072004@yandex.ru
+
+[includeIf "gitdir:~/projects/hawk/"]
+    path = ~/.gitconfig-hawk

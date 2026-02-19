@@ -1,0 +1,36 @@
+image: docker:24.0.2
+
+services:
+  - name: docker:24-dind
+    alias: docker
+
+variables:
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""
+
+stages:
+  - build
+
+build-and-push:
+  stage: build
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker buildx create --use --name ci-builder || true
+    - docker buildx inspect --bootstrap
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        IMAGE_TAG="$CI_COMMIT_TAG"
+      elif [ -n "$CI_COMMIT_SHORT_SHA" ]; then
+        IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+      else
+        IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"
+      fi
+      echo "Image tag: $IMAGE_TAG"
+    - docker buildx build --platform linux/amd64,linux/arm64 -t "${CI_REGISTRY_IMAGE}:${IMAGE_TAG}" --push .
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+    - when: never
