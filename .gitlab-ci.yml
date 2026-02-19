@@ -24,6 +24,7 @@ build-and-push:
     - docker buildx inspect --bootstrap
     - git config user.name "$(git config --get user.name)"
     - git config user.email "$(git config --get user.email)"
+    - git config --list
   script:
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
