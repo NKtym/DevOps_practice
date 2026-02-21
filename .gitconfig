@@ -1,6 +1,6 @@
 [user]
-    name = Pavel
-    email = Pasha04072004@gmail.com
+    name = iv222s03
+    email = iv222s03@csc.sibsutis.ru"
 
 [includeIf "gitdir:~/projects/hawk/"]
     path = ~/.gitconfig-hawk
