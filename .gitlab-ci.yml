@@ -12,12 +12,15 @@ variables:
 
 stages:
   - build
+  - diff
+  - deploy
 
 build-and-push:
   stage: build
   before_script:
     - apk add git
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - echo "$HAWK_REGISTRY_PASSWORD" | docker login "$HAWK_REGISTRY" -u "$HAWK_REGISTRY_USER" --password-stdin
     - docker context create tls-context || true
     - docker context use tls-context
     - docker buildx create tls-context --name ci-builder --driver docker-container --use || true
@@ -33,11 +36,112 @@ build-and-push:
         IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"
       fi
       echo "Image tag: $IMAGE_TAG"
-    - docker buildx build --platform linux/amd64,linux/arm64 -t "${CI_REGISTRY_IMAGE}:${IMAGE_TAG}" -t "${CI_REGISTRY_IMAGE}:latest" --push .
+    - docker buildx build --platform linux/amd64,linux/arm64 \
+      -t "${CI_REGISTRY_IMAGE}:${IMAGE_TAG}" -t "${CI_REGISTRY_IMAGE}:latest" \
+      -t "${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG}" -t "${HAWK_REGISTRY_IMAGE}:latest" --push .
   rules:
     - if: $CI_COMMIT_TAG
       when: always
     - if: $CI_PIPELINE_SOURCE == "push"
       when: manual
     - when: never
-    
+
+diff-dev:
+  stage: diff
+  image: registry.csc.sibsutis.ru/csc-public/internal-container-images/k8s-tools:latest
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        export IMAGE_TAG="$CI_COMMIT_TAG"
+      elif [ -n "$CI_COMMIT_SHORT_SHA" ]; then
+        export IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+      else
+        export IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"
+      fi
+      export DEPLOY_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      export OWNER="${OWNER:-$CI_PROJECT_NAMESPACE}"
+      echo "helmfile diff (env=dev) -> image=${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG} owner=${OWNER} ts=${DEPLOY_TIMESTAMP}"
+    - helmfile -f helmfile.yaml -e dev -l env=dev diff
+  only:
+    - branches
+    - tags
+
+diff-prod:
+  stage: diff
+  image: registry.csc.sibsutis.ru/csc-public/internal-container-images/k8s-tools:latest
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        export IMAGE_TAG="$CI_COMMIT_TAG"
+      elif [ -n "$CI_COMMIT_SHORT_SHA" ]; then
+        export IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+      else
+        export IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"
+      fi
+      export DEPLOY_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      export OWNER="${OWNER:-$CI_PROJECT_NAMESPACE}"
+      echo "helmfile diff (env=prod) -> image=${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG} owner=${OWNER} ts=${DEPLOY_TIMESTAMP}"
+    - helmfile -f helmfile.yaml -e prod -l env=prod diff
+  only:
+    - branches
+    - tags
+
+deploy-dev:
+  stage: deploy
+  image: registry.csc.sibsutis.ru/csc-public/internal-container-images/k8s-tools:latest
+  when: manual
+  allow_failure: false
+  environment:
+    name: dev
+  before_script:
+    - |
+      if [ -z "$KUBECONFIG" ] || [ ! -f "$KUBECONFIG" ]; then
+        echo "ERROR: KUBECONFIG file variable is not set or file not found. Add CI variable KUBECONFIG (File) with kubeconfig for the 'ci' ServiceAccount."
+        exit 1
+      fi
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        export IMAGE_TAG="$CI_COMMIT_TAG"
+      elif [ -n "$CI_COMMIT_SHORT_SHA" ]; then
+        export IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+      else
+        export IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"
+      fi
+      export DEPLOY_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      export OWNER="${OWNER:-$CI_PROJECT_NAMESPACE}"
+      echo "Deploying env=dev image=${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG} owner=${OWNER} ts=${DEPLOY_TIMESTAMP}"
+    - helmfile -f helmfile.yaml -e dev -l env=dev apply
+  only:
+    - branches
+    - tags
+
+deploy-prod:
+  stage: deploy
+  image: registry.csc.sibsutis.ru/csc-public/internal-container-images/k8s-tools:latest
+  when: manual
+  allow_failure: false
+  environment:
+    name: prod
+  before_script:
+    - |
+      if [ -z "$KUBECONFIG" ] || [ ! -f "$KUBECONFIG" ]; then
+        echo "ERROR: KUBECONFIG file variable is not set or file not found. Add CI variable KUBECONFIG (File) with kubeconfig for the 'ci' ServiceAccount."
+        exit 1
+      fi
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        export IMAGE_TAG="$CI_COMMIT_TAG"
+      elif [ -n "$CI_COMMIT_SHORT_SHA" ]; then
+        export IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+      else
+        export IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"
+      fi
+      export DEPLOY_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      export OWNER="${OWNER:-$CI_PROJECT_NAMESPACE}"
+      echo "Deploying env=prod image=${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG} owner=${OWNER} ts=${DEPLOY_TIMESTAMP}"
+    - helmfile -f helmfile.yaml -e prod -l env=prod apply
+  only:
+    - branches
+    - tags
