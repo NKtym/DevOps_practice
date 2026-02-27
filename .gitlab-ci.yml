@@ -37,8 +37,10 @@ build-and-push:
       fi
       echo "Image tag: $IMAGE_TAG"
     - docker buildx build --platform linux/amd64,linux/arm64 \
-      -t "${CI_REGISTRY_IMAGE}:${IMAGE_TAG}" -t "${CI_REGISTRY_IMAGE}:latest" \
-      -t "${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG}" -t "${HAWK_REGISTRY_IMAGE}:latest" --push .
+        --pull \
+        -t "${CI_REGISTRY_IMAGE}:${IMAGE_TAG}" -t "${CI_REGISTRY_IMAGE}:latest" \
+        -t "${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG}" -t "${HAWK_REGISTRY_IMAGE}:latest" \
+        --push .
   rules:
     - if: $CI_COMMIT_TAG
       when: always
