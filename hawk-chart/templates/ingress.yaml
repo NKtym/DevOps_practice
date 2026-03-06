@@ -28,7 +28,7 @@ spec:
     - host: {{ .host | quote }}
       http:
         paths:
-          {{ range .paths }}
+          {{- range .paths }}
           - path: {{ .path }}
             {{- with .pathType }}
             pathType: {{ . }}

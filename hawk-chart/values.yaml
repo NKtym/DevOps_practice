@@ -2,9 +2,9 @@ owner: "iv222s03"
 replicaCount: 1
 
 image:
-  repository: ""
+  repository: nginx
   pullPolicy: IfNotPresent
-  tag: ""
+  tag: "1.16.0"
 
 imagePullSecrets: []
 nameOverride: ""
