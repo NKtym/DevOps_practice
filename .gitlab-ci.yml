@@ -1,4 +1,5 @@
 image: docker:24.0.2
+image: cablespaghetti/helmfile-docker:latest
 
 services:
   - name: docker:24-dind
