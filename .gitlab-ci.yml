@@ -1,5 +1,4 @@
 image: docker:24.0.2
-image: cablespaghetti/helmfile-docker:latest
 
 services:
   - name: docker:24-dind
@@ -19,6 +18,7 @@ stages:
 build-and-push:
   stage: build
   image: registry.csc.sibsutis.ru/csc-public/internal-container-images/k8s-tools:latest
+  image: cablespaghetti/helmfile-docker:latest
   before_script:
     - apk add bash curl git
     - curl -L https://github.com/roboll/helmfile/releases/download/v0.184.0/helmfile_linux_amd64 -o /usr/local/bin/helmfile
