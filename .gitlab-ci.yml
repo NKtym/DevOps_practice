@@ -74,7 +74,7 @@ diff-dev:
       export DEPLOY_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
       export OWNER="${OWNER:-$CI_PROJECT_NAMESPACE}"
       echo "helmfile diff (env=dev) -> image=${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG} owner=${OWNER} ts=${DEPLOY_TIMESTAMP}"
-    - helmfile -f helmfile.yaml -e dev -l env=dev diff
+    - helmfile -f helmfile.yaml.gotmpl -e dev -l env=dev diff
   only:
     - branches
     - tags
@@ -94,7 +94,7 @@ diff-prod:
       export DEPLOY_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
       export OWNER="${OWNER:-$CI_PROJECT_NAMESPACE}"
       echo "helmfile diff (env=prod) -> image=${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG} owner=${OWNER} ts=${DEPLOY_TIMESTAMP}"
-    - helmfile -f helmfile.yaml -e prod -l env=prod diff
+    - helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod diff
   only:
     - branches
     - tags
@@ -124,7 +124,7 @@ deploy-dev:
       export DEPLOY_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
       export OWNER="${OWNER:-$CI_PROJECT_NAMESPACE}"
       echo "Deploying env=dev image=${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG} owner=${OWNER} ts=${DEPLOY_TIMESTAMP}"
-    - helmfile -f helmfile.yaml -e dev -l env=dev apply
+    - helmfile -f helmfile.yaml.gotmpl -e dev -l env=dev apply
   only:
     - branches
     - tags
@@ -154,7 +154,7 @@ deploy-prod:
       export DEPLOY_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
       export OWNER="${OWNER:-$CI_PROJECT_NAMESPACE}"
       echo "Deploying env=prod image=${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG} owner=${OWNER} ts=${DEPLOY_TIMESTAMP}"
-    - helmfile -f helmfile.yaml -e prod -l env=prod apply
+    - helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod apply
   only:
     - branches
     - tags
