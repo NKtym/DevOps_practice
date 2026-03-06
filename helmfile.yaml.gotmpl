@@ -14,7 +14,8 @@ releases:
   # Dev release
   - name: app-dev
     namespace: iv222
-    chart: ./hawk-chart                  # используем локальный путь к chart
+    chart: ./hawk-chart
+    createNamespace: false
     labels:
       env: dev
     values:
@@ -30,10 +31,10 @@ releases:
           hosts:
             - host: "{{ printf "%s.%s" (default .Environment.Values.HOST_NAME "app-dev") (default .Environment.Values.HOST_BASE "hawk.csc.sibsutis.ru") }}"
 
-  # Prod release
   - name: app-prod
     namespace: iv222
     chart: ./hawk-chart
+    createNamespace: false
     labels:
       env: prod
     values:
