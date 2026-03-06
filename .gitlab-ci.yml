@@ -25,6 +25,8 @@ build-and-push:
     - docker context use tls-context
     - docker buildx create tls-context --name ci-builder --driver docker-container --use || true
     - docker buildx inspect --bootstrap
+    - helmfile -e dev template
+    - helmfile -e dev diff
 
   script:
     - |

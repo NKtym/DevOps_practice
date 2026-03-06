@@ -10,18 +10,14 @@ environments:
 
 ---
 
-repositories:
-  - name: local
-    url: file://./hawk-chart
-
 releases:
+  # Dev release
   - name: app-dev
-    namespace: iv222                     # укажите ваше namespace
-    chart: ./hawk-chart
+    namespace: iv222
+    chart: ./hawk-chart                  # используем локальный путь к chart
     labels:
       env: dev
     values:
-      # НЕ указываем ./hawk-chart/values.yaml здесь
       - image:
           repository: {{ env "HAWK_REGISTRY_IMAGE" }}
           tag: {{ env "IMAGE_TAG" }}
@@ -32,7 +28,8 @@ releases:
           enabled: true
           className: hawk-dev
           hosts:
-            - host: "{{ printf \"%s.%s\" .Environment.Values.HOST_NAME .Environment.Values.HOST_BASE }}"
+            - host: "{{ printf "%s.%s" (default .Environment.Values.HOST_NAME "app-dev") (default .Environment.Values.HOST_BASE "hawk.csc.sibsutis.ru") }}"
+
   # Prod release
   - name: app-prod
     namespace: iv222
@@ -48,6 +45,6 @@ releases:
       - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
       - ingress:
           enabled: true
-          className: hawk-dev
+          className: hawk-prod
           hosts:
-            - host: "{{ printf \"%s.%s\" .Environment.Values.HOST_NAME .Environment.Values.HOST_BASE }}"
+            - host: "{{ printf "%s.%s" (default .Environment.Values.HOST_NAME "app-prod") (default .Environment.Values.HOST_BASE "hawk.csc.sibsutis.ru") }}"
