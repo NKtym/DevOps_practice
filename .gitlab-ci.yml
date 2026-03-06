@@ -19,7 +19,7 @@ build-and-push:
   stage: build
   image: alpine:3.18
   before_script:
-    - apk add git
+    - apk add bash curl git
     - curl -L https://github.com/roboll/helmfile/releases/download/v0.184.0/helmfile_linux_amd64 -o /usr/local/bin/helmfile
     - helm plugin install https://github.com/databus23/helm-diff --verify=false || true
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
