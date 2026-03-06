@@ -17,7 +17,7 @@ stages:
 
 build-and-push:
   stage: build
-  image: alpine:3.18
+  image: registry.csc.sibsutis.ru/csc-public/internal-container-images/k8s-tools:latest
   before_script:
     - apk add bash curl git
     - curl -L https://github.com/roboll/helmfile/releases/download/v0.184.0/helmfile_linux_amd64 -o /usr/local/bin/helmfile
