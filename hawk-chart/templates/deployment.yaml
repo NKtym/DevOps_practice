@@ -30,28 +30,20 @@ spec:
       serviceAccountName: {{ include "hawk-chart.serviceAccountName" . }}
       {{- with .Values.podSecurityContext }}
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 3000
-        fsGroup: 2000
-        allowPrivilegeEscalation: "false"
-        capabilities:
-          drop:
-            - "ALL"
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           {{- with .Values.securityContext }}
-                securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 3000
-        fsGroup: 2000
-        allowPrivilegeEscalation: "false"
-        capabilities:
-          drop:
-            - "ALL"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 3000
+            fsGroup: 2000
+            allowPrivilegeEscalation: "false"
+            capabilities:
+              drop:
+                - "ALL"
             {{- toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
