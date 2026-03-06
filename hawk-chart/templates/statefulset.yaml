@@ -29,13 +29,6 @@ spec:
         - name: {{ .Chart.Name }}
           {{- with .Values.securityContext }}
           securityContext:
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 3000
-            allowPrivilegeEscalation: "false"
-            capabilities:
-              drop:
-                - "ALL"
             {{- toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -54,12 +47,6 @@ spec:
           {{- end }}
           {{- with .Values.resources }}
           resources:
-            requests:
-              memory: "16Mi"
-              cpu: "50m"
-            limits:
-              cpu: "100m"
-              memory: "32Mi"
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.volumeMounts }}
