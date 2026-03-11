@@ -30,6 +30,7 @@ build-and-push:
     - curl -L https://github.com/helmfile/helmfile/releases/download/v1.4.1/helmfile_1.4.1_linux_amd64.tar.gz -o helmfile_1.4.1_linux_amd64.tar.gz
     - tar -xzf helmfile_1.4.1_linux_amd64.tar.gz
     - mv helmfile /usr/local/bin/
+    - chmod +x /usr/local/bin/helmfile
     - helmfile -v
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - echo "$HAWK_REGISTRY_PASSWORD" | docker login "$HAWK_REGISTRY" -u "$HAWK_REGISTRY_USER" --password-stdin
