@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: iv222
   labels:
-    owner: iv222s03
+    owner: iv222
