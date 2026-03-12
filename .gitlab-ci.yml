@@ -21,6 +21,7 @@ stages:
   - build
   - diff
   - deploy
+  - test
 
 build-and-push:
   stage: build
@@ -156,6 +157,34 @@ deploy-prod:
       export OWNER="${OWNER:-$CI_PROJECT_NAMESPACE}"
       echo "Deploying env=prod image=${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG} owner=${OWNER} ts=${DEPLOY_TIMESTAMP}"
     - helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod apply
+  only:
+    - branches
+    - tags
+
+test-ci:
+  stage: test
+  image: registry.csc.sibsutis.ru/csc-public/internal-container-images/k8s-tools:latest
+
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        IMAGE_TAG="$CI_COMMIT_TAG"
+      elif [ -n "$CI_COMMIT_SHORT_SHA" ]; then
+        IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+      else
+        IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"
+      fi
+
+      docker manifest inspect "${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG}" > /dev/null
+
+    - |
+      helmfile -f helmfile.yaml.gotmpl -e dev -l env=dev diff
+      helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod diff
+
+    - |
+      helmfile -f helmfile.yaml.gotmpl -e dev -l env=dev template > dev.yaml
+      helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod template > prod.yaml
+
   only:
     - branches
     - tags
