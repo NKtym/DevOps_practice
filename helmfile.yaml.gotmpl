@@ -49,7 +49,7 @@ releases:
       - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
       - ingress:
           enabled: true
-          className: hawk-prod
+          className: hawk-dev
           hosts:
             - host: "{{ printf "%s.%s" (default .Environment.Values.HOST_NAME "app-prod") (default .Environment.Values.HOST_BASE "hawk-prod.csc.sibsutis.ru") }}"
               paths:
