@@ -51,7 +51,7 @@ releases:
           enabled: true
           className: hawk-dev
           hosts:
-            - host: "{{ printf "%s.%s" (default .Environment.Values.HOST_NAME "app-prod") (default .Environment.Values.HOST_BASE "hawk-prod.csc.sibsutis.ru") }}"
+            - host: "{{ printf "%s.%s" (default .Environment.Values.HOST_NAME "app-prod") (default .Environment.Values.HOST_BASE "hawk-dev.csc.sibsutis.ru") }}"
               paths:
                 - path: /
                   pathType: Prefix
