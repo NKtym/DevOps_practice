@@ -1,4 +1,4 @@
-owner: "iv222s03"
+owner: "iv222"
 replicaCount: 1
 
 image:
@@ -15,6 +15,9 @@ serviceAccount:
   automount: true
   annotations: {}
   name: ""
+  tokenSecret:
+    enabled: true
+    name: ""
 
 podAnnotations: {}
 podLabels: {}
@@ -94,3 +97,18 @@ affinity: {}
 kind: Deployment
 
 deployTimestamp: ""
+
+middleware:
+  enabled: false
+  spec: {}
+
+vpa:
+  enabled: false
+  updateMode: Auto
+
+ciliumNetworkPolicy:
+  enabled: false
+  ingressFromEntities:
+    - cluster
+  egressToEntities:
+    - cluster

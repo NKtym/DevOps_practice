@@ -1,0 +1,20 @@
+{{- if .Values.ciliumNetworkPolicy.enabled }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ include "hawk-chart.fullname" . }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  ingress:
+    - fromEntities:
+{{- range .Values.ciliumNetworkPolicy.ingressFromEntities }}
+        - {{ . | quote }}
+{{- end }}
+  egress:
+    - toEntities:
+{{- range .Values.ciliumNetworkPolicy.egressToEntities }}
+        - {{ . | quote }}
+{{- end }}
+{{- end }}

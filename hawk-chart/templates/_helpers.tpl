@@ -49,7 +49,6 @@ Selector labels
 {{- define "hawk-chart.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "hawk-chart.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-owner: {{ .Values.owner | default "" }}
 {{- end }}
 
 {{/*

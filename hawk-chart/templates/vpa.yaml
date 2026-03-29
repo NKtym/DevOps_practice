@@ -1,0 +1,13 @@
+{{- if .Values.vpa.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "hawk-chart.fullname" . }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: {{ .Values.kind }}
+    name: {{ include "hawk-chart.fullname" . }}
+  updatePolicy:
+    updateMode: {{ .Values.vpa.updateMode }}
+{{- end }}
