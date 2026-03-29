@@ -99,8 +99,11 @@ kind: Deployment
 deployTimestamp: ""
 
 middleware:
-  enabled: false
-  spec: {}
+  enabled: true
+  spec:
+    ipAllowList:
+      sourceRange:
+        - "81.19.141.18/32"
 
 vpa:
   enabled: false
@@ -112,3 +115,10 @@ ciliumNetworkPolicy:
     - cluster
   egressToEntities:
     - cluster
+
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods"]
+      verbs: ["list"]

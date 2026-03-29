@@ -28,6 +28,8 @@ releases:
       - ingress:
           enabled: true
           className: hawk-dev
+          annotations:
+            traefik.ingress.kubernetes.io/router.middlewares: "app-dev-hawk-chart@kubernetescrd"
           hosts:
             - host: "{{ printf "%s.%s" (default .Environment.Values.HOST_NAME "app-dev") (default .Environment.Values.HOST_BASE "hawk-dev.csc.sibsutis.ru") }}"
               paths:
@@ -50,6 +52,8 @@ releases:
       - ingress:
           enabled: true
           className: hawk-dev
+          annotations:
+            traefik.ingress.kubernetes.io/router.middlewares: "app-prod-hawk-chart@kubernetescrd"
           hosts:
             - host: "{{ printf "%s.%s" (default .Environment.Values.HOST_NAME "app-prod") (default .Environment.Values.HOST_BASE "hawk-dev.csc.sibsutis.ru") }}"
               paths:

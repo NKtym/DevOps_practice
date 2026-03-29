@@ -2,19 +2,31 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 )
 
+const (
+	serviceAccountTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	serviceAccountNSPath    = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+	serviceAccountCAPath    = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+)
+
 type RootResp struct {
-	Message   string    `json:"message"`
-	StartedAt time.Time `json:"started_at"`
+	Message     string    `json:"message"`
+	StartedAt   time.Time `json:"started_at"`
+	RunningPods int       `json:"running_pods"`
 }
 
 type HealthResp struct {
@@ -40,9 +52,12 @@ func performCleanup(ctx context.Context) {
 
 func backgroundWorker(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
+
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
+
 	log.Println("Background worker: started")
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -51,6 +66,7 @@ func backgroundWorker(ctx context.Context, wg *sync.WaitGroup) {
 			performCleanup(cleanupCtx)
 			cancel()
 			return
+
 		case t := <-ticker.C:
 			log.Printf("Background worker: tick at %s\n", t.UTC().Format(time.RFC3339))
 		}
@@ -65,21 +81,123 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func getRunningPodsCount(ctx context.Context) (int, error) {
+	nsBytes, err := os.ReadFile(serviceAccountNSPath)
+	if err != nil {
+		return 0, fmt.Errorf("read namespace: %w", err)
+	}
+	namespace := strings.TrimSpace(string(nsBytes))
+	if namespace == "" {
+		return 0, fmt.Errorf("namespace is empty")
+	}
+
+	tokenBytes, err := os.ReadFile(serviceAccountTokenPath)
+	if err != nil {
+		return 0, fmt.Errorf("read token: %w", err)
+	}
+	token := strings.TrimSpace(string(tokenBytes))
+	if token == "" {
+		return 0, fmt.Errorf("token is empty")
+	}
+
+	caBytes, err := os.ReadFile(serviceAccountCAPath)
+	if err != nil {
+		return 0, fmt.Errorf("read CA: %w", err)
+	}
+
+	roots := x509.NewCertPool()
+	if ok := roots.AppendCertsFromPEM(caBytes); !ok {
+		return 0, fmt.Errorf("append CA cert failed")
+	}
+
+	host := os.Getenv("KUBERNETES_SERVICE_HOST")
+	port := os.Getenv("KUBERNETES_SERVICE_PORT_HTTPS")
+	if port == "" {
+		port = "443"
+	}
+	if host == "" {
+		return 0, fmt.Errorf("KUBERNETES_SERVICE_HOST is empty")
+	}
+
+	url := fmt.Sprintf("https://%s:%s/api/v1/namespaces/%s/pods", host, port, namespace)
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: roots,
+			},
+		},
+		Timeout: 5 * time.Second,
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return 0, fmt.Errorf("create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("call kubernetes api: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return 0, fmt.Errorf("kubernetes api status %s: %s", resp.Status, strings.TrimSpace(string(body)))
+	}
+
+	var podList struct {
+		Items []struct {
+			Status struct {
+				Phase string `json:"phase"`
+			} `json:"status"`
+		} `json:"items"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&podList); err != nil {
+		return 0, fmt.Errorf("decode pods list: %w", err)
+	}
+
+	running := 0
+	for _, pod := range podList.Items {
+		if pod.Status.Phase == "Running" {
+			running++
+		}
+	}
+
+	return running, nil
+}
+
 func main() {
 	startedAt := time.Now().UTC()
+
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		runningPods, err := getRunningPodsCount(r.Context())
+		if err != nil {
+			writeJSON(w, map[string]string{
+				"error": err.Error(),
+			}, http.StatusServiceUnavailable)
+			return
+		}
+
 		writeJSON(w, RootResp{
-			Message:   "Good",
-			StartedAt: startedAt,
+			Message:     "Good",
+			StartedAt:   startedAt,
+			RunningPods: runningPods,
 		}, http.StatusOK)
 	})
+
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, HealthResp{
 			Status: "ok",
 			Time:   time.Now().UTC(),
 		}, http.StatusOK)
 	})
+
 	srv := &http.Server{
 		Addr:         ":8080",
 		Handler:      loggingMiddleware(mux),
@@ -87,28 +205,36 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
+
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
+
 	wg.Add(1)
 	go backgroundWorker(ctx, &wg)
+
 	go func() {
 		log.Printf("Server starting on %s\n", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe(): %v", err)
 		}
 	}()
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-stop
 	log.Printf("Signal received: %v", sig)
+
 	cancel()
+
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
+
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("Server shutdown error: %v\n", err)
 	} else {
 		log.Println("HTTP server stopped gracefully")
 	}
+
 	wg.Wait()
 	log.Println("Background tasks finished")
 }
