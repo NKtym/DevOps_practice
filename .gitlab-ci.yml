@@ -149,27 +149,29 @@ test-ci:
     - apk add docker
 
   script:
-    - if [ -n "$CI_COMMIT_TAG" ]; then IMAGE_TAG="$CI_COMMIT_TAG"; fi
-    - if [ -n "$CI_COMMIT_SHORT_SHA" ]; then IMAGE_TAG="$CI_COMMIT_SHORT_SHA"; fi
-    - if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"; fi
-    - echo "IMAGE_TAG=$IMAGE_TAG"
-    - echo "$HAWK_REGISTRY_PASSWORD" | docker login "$HAWK_REGISTRY" -u "$HAWK_REGISTRY_USER" --password-stdin
-    - docker manifest inspect "${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG}" > /dev/null
-    - helmfile -f helmfile.yaml.gotmpl -e dev -l env=dev diff
-    - helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod diff
-    - helmfile -f helmfile.yaml.gotmpl -e dev -l env=dev template > dev.yaml
-    - helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod template > prod.yaml
-    - grep -q "kind: ServiceAccount" dev.yaml || { echo "ServiceAccount отсутствует"; exit 1; }
-    - grep -A3 "kind: Role" dev.yaml | grep -q "pods" || { echo "Role для pods отсутствует"; exit 1; }
-    - grep -A5 "kind: RoleBinding" dev.yaml | grep -q "ServiceAccount" || { echo "RoleBinding отсутствует"; exit 1; }
-    - grep -A2 "kind: Deployment" dev.yaml | grep -q "serviceAccountName:" || { echo "Deployment не использует ServiceAccount"; exit 1; }
-    - grep -q "kind: Middleware" dev.yaml || { echo "Middleware отсутствует"; exit 1; }
-    - grep -q "kind: VerticalPodAutoscaler" dev.yaml || { echo "VPA отсутствует"; exit 1; }
-    - kubectl get pod -n iv222
-    - kubectl port-forward -n iv222 svc/app-dev-hawk-chart 8080:80 &
-    - PORT_FORWARD_PID=$!
-    - sleep 30
-    - RESPONSE=$(curl -s http://127.0.0.1:8080/)
-    - echo "$RESPONSE"
-    - echo "$RESPONSE" | grep -q '"running_pods":' || {kill $PORT_FORWARD_PID; exit 1; }
-    - kill $PORT_FORWARD_PID
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then IMAGE_TAG="$CI_COMMIT_TAG"; fi
+      if [ -n "$CI_COMMIT_SHORT_SHA" ]; then IMAGE_TAG="$CI_COMMIT_SHORT_SHA"; fi
+      if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"; fi
+      echo "IMAGE_TAG=$IMAGE_TAG"
+      echo "$HAWK_REGISTRY_PASSWORD" | docker login "$HAWK_REGISTRY" -u "$HAWK_REGISTRY_USER" --password-stdin
+      docker manifest inspect "${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG}" > /dev/null
+      helmfile -f helmfile.yaml.gotmpl -e dev -l env=dev diff
+      helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod diff
+      helmfile -f helmfile.yaml.gotmpl -e dev -l env=dev template > dev.yaml
+      helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod template > prod.yaml
+    - |
+      grep -q "kind: ServiceAccount" dev.yaml || { echo "ServiceAccount отсутствует"; exit 1; }
+      grep -A3 "kind: Role" dev.yaml | grep -q "pods" || { echo "Role для pods отсутствует"; exit 1; }
+      grep -A5 "kind: RoleBinding" dev.yaml | grep -q "ServiceAccount" || { echo "RoleBinding отсутствует"; exit 1; }
+      grep -A2 "kind: Deployment" dev.yaml | grep -q "serviceAccountName:" || { echo "Deployment не использует ServiceAccount"; exit 1; }
+      grep -q "kind: Middleware" dev.yaml || { echo "Middleware отсутствует"; exit 1; }
+      grep -q "kind: VerticalPodAutoscaler" dev.yaml || { echo "VPA отсутствует"; exit 1; }
+      kubectl get pod -n iv222
+      kubectl port-forward -n iv222 svc/app-dev-hawk-chart 8080:80 &
+      PORT_FORWARD_PID=$!
+      sleep 30
+      RESPONSE=$(curl -s http://127.0.0.1:8080/)
+      echo "$RESPONSE"
+      echo "$RESPONSE" | grep -q '"running_pods":' || {kill $PORT_FORWARD_PID; exit 1; }
+      kill $PORT_FORWARD_PID
