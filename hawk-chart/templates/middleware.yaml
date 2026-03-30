@@ -3,6 +3,8 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: {{ include "hawk-chart.fullname" . }}
+  labels:
+    {{- include "hawk-chart.labels" . | nindent 4 }}
 spec:
   {{- toYaml .Values.middleware.spec | nindent 2 }}
 {{- end }}
