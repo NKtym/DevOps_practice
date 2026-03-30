@@ -106,7 +106,7 @@ middleware:
         - "81.19.141.18/32"
 
 vpa:
-  enabled: false
+  enabled: true
   updateMode: Auto
 
 ciliumNetworkPolicy:
