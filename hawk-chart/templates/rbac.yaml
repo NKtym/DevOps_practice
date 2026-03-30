@@ -2,24 +2,24 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "hawk-chart.fullname" . }}
-  labels:
-    {{- include "hawk-chart.labels" . | nindent 4 }}
+  name: ci-portforward
+  namespace: iv222
 rules:
-  {{- toYaml .Values.rbac.rules | nindent 2 }}
+  - apiGroups: [""]
+    resources: ["pods", "pods/portforward"]
+    verbs: ["get", "list", "watch", "create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "hawk-chart.fullname" . }}
-  labels:
-    {{- include "hawk-chart.labels" . | nindent 4 }}
+  name: ci-portforward
+  namespace: iv222
 subjects:
   - kind: ServiceAccount
-    name: {{ include "hawk-chart.serviceAccountName" . }}
-    namespace: {{ .Release.Namespace }}
+    name: ci
+    namespace: iv222
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "hawk-chart.fullname" . }}
+  name: ci-portforward
 {{- end }}

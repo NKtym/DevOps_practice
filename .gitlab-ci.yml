@@ -160,6 +160,7 @@ test-ci:
       helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod diff
       helmfile -f helmfile.yaml.gotmpl -e dev -l env=dev template > dev.yaml
       helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod template > prod.yaml
+    - kubectl apply -f hawk-chart/template/rbac.yaml
     - |
       grep -q "kind: ServiceAccount" dev.yaml || { echo "ServiceAccount отсутствует"; exit 1; }
       awk '
