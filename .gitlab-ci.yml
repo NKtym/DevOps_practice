@@ -172,7 +172,11 @@ test-ci:
         in_rb { print }
         /^---$/ && in_rb { exit }
       ' dev.yaml | grep -q "ServiceAccount" || { echo "RoleBinding отсутствует"; exit 1; }
-      grep -q "kind: Deployment" dev.yaml | grep -q "serviceAccountName:" || { echo "Deployment не использует ServiceAccount"; exit 1; }
+      awk '
+        /^kind: Deployment$/ { in_dep=1 }
+        in_dep { print }
+        /^---$/ && in_dep { exit }
+      ' dev.yaml | grep -q "serviceAccountName:" || { echo "Deployment не использует ServiceAccount"; exit 1; }
       grep -q "kind: Middleware" dev.yaml || { echo "Middleware отсутствует"; exit 1; }
       grep -q "kind: VerticalPodAutoscaler" dev.yaml || { echo "VPA отсутствует"; exit 1; }
       kubectl get pod -n iv222
