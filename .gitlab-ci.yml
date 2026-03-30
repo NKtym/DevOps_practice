@@ -162,9 +162,17 @@ test-ci:
       helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod template > prod.yaml
     - |
       grep -q "kind: ServiceAccount" dev.yaml || { echo "ServiceAccount отсутствует"; exit 1; }
-      grep -A10 "kind: Role" dev.yaml | grep -q "pods" || { echo "Role для pods отсутствует"; exit 1; }
-      grep -A10 "kind: RoleBinding" dev.yaml | grep -q "ServiceAccount" || { echo "RoleBinding отсутствует"; exit 1; }
-      grep -A10 "kind: Deployment" dev.yaml | grep -q "serviceAccountName:" || { echo "Deployment не использует ServiceAccount"; exit 1; }
+      awk '
+        /^kind: Role$/ { in_role=1 }
+        in_role { print }
+        /^---$/ && in_role { exit }
+      ' dev.yaml | grep -q "pods" || { echo "Role для pods отсутствует"; exit 1; }
+      awk '
+        /^kind: RoleBinding$/ { in_rb=1 }
+        in_rb { print }
+        /^---$/ && in_rb { exit }
+      ' dev.yaml | grep -q "ServiceAccount" || { echo "RoleBinding отсутствует"; exit 1; }
+      grep -q "kind: Deployment" dev.yaml | grep -q "serviceAccountName:" || { echo "Deployment не использует ServiceAccount"; exit 1; }
       grep -q "kind: Middleware" dev.yaml || { echo "Middleware отсутствует"; exit 1; }
       grep -q "kind: VerticalPodAutoscaler" dev.yaml || { echo "VPA отсутствует"; exit 1; }
       kubectl get pod -n iv222
