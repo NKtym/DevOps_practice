@@ -1,0 +1,452 @@
+---
+# Source: hawk-chart/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-dev-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+automountServiceAccountToken: true
+---
+# Source: hawk-chart/templates/secret-sa-token.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-dev-hawk-chart-token
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+  annotations:
+    kubernetes.io/service-account.name: app-dev-hawk-chart
+type: kubernetes.io/service-account-token
+---
+# Source: hawk-chart/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: app-dev-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+rules:
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    verbs:
+    - list
+---
+# Source: hawk-chart/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: app-dev-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+subjects:
+  - kind: ServiceAccount
+    name: app-dev-hawk-chart
+    namespace: iv222
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: app-dev-hawk-chart
+---
+# Source: hawk-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-dev-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+---
+# Source: hawk-chart/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-dev-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hawk-chart
+      app.kubernetes.io/instance: app-dev
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: hawk-chart-0.1.0
+        app.kubernetes.io/name: hawk-chart
+        app.kubernetes.io/instance: app-dev
+        app.kubernetes.io/version: "1.16.0"
+        app.kubernetes.io/managed-by: Helm
+        owner: iv222
+    spec:
+      serviceAccountName: app-dev-hawk-chart
+      securityContext:
+        fsGroup: 2000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: hawk-chart
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: ":1.16.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 32Mi
+            requests:
+              cpu: 50m
+              memory: 16Mi
+---
+# Source: hawk-chart/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-dev-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: app-dev-hawk-chart@kubernetescrd
+spec:
+  ingressClassName: hawk-dev
+  rules:
+    - host: "app-dev.hawk-dev.csc.sibsutis.ru"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app-dev-hawk-chart
+                port:
+                  number: 80
+---
+# Source: hawk-chart/templates/middleware.yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: app-dev-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+spec:
+  ipAllowList:
+    sourceRange:
+    - 81.19.141.18/32
+---
+# Source: hawk-chart/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "app-dev-hawk-chart-test-connection"
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-dev
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['app-dev-hawk-chart:80']
+  restartPolicy: Never
+
+---
+# Source: hawk-chart/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-prod-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+automountServiceAccountToken: true
+---
+# Source: hawk-chart/templates/secret-sa-token.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-prod-hawk-chart-token
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+  annotations:
+    kubernetes.io/service-account.name: app-prod-hawk-chart
+type: kubernetes.io/service-account-token
+---
+# Source: hawk-chart/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: app-prod-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+rules:
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    verbs:
+    - list
+---
+# Source: hawk-chart/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: app-prod-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+subjects:
+  - kind: ServiceAccount
+    name: app-prod-hawk-chart
+    namespace: iv222
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: app-prod-hawk-chart
+---
+# Source: hawk-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-prod-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+---
+# Source: hawk-chart/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-prod-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hawk-chart
+      app.kubernetes.io/instance: app-prod
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: hawk-chart-0.1.0
+        app.kubernetes.io/name: hawk-chart
+        app.kubernetes.io/instance: app-prod
+        app.kubernetes.io/version: "1.16.0"
+        app.kubernetes.io/managed-by: Helm
+        owner: iv222
+    spec:
+      serviceAccountName: app-prod-hawk-chart
+      securityContext:
+        fsGroup: 2000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: hawk-chart
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: ":1.16.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 32Mi
+            requests:
+              cpu: 50m
+              memory: 16Mi
+---
+# Source: hawk-chart/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-prod-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: app-prod-hawk-chart@kubernetescrd
+spec:
+  ingressClassName: hawk-dev
+  rules:
+    - host: "app-prod.hawk-dev.csc.sibsutis.ru"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app-prod-hawk-chart
+                port:
+                  number: 80
+---
+# Source: hawk-chart/templates/middleware.yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: app-prod-hawk-chart
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+spec:
+  ipAllowList:
+    sourceRange:
+    - 81.19.141.18/32
+---
+# Source: hawk-chart/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "app-prod-hawk-chart-test-connection"
+  labels:
+    helm.sh/chart: hawk-chart-0.1.0
+    app.kubernetes.io/name: hawk-chart
+    app.kubernetes.io/instance: app-prod
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+    owner: iv222
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['app-prod-hawk-chart:80']
+  restartPolicy: Never
+
