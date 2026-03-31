@@ -14,9 +14,21 @@ spec:
     - fromEntities:
       {{- toYaml .Values.ciliumNetworkPolicy.ingressFromEntities | nindent 8 }}
   {{- end }}
-  {{- if .Values.ciliumNetworkPolicy.egressToEntities }}
+  
+  {{- if .Values.ciliumNetworkPolicy.egressToExternalApps }}
   egress:
-    - toEntities:
-      {{- toYaml .Values.ciliumNetworkPolicy.egressToEntities | nindent 8 }}
+    {{- range .Values.ciliumNetworkPolicy.egressToExternalApps }}
+    - toEndpoints:
+      - matchLabels:
+          app.kubernetes.io/instance: {{ .podSelector.app.kubernetes.io/instance | quote }}
+        matchExpressions:
+        - key: io.kubernetes.pod.namespace
+          operator: In
+          values: [ "{{ .namespace }}" ]
+      toPorts:
+      - ports:
+        - port: "8080"
+          protocol: TCP
+    {{- end }}
   {{- end }}
 {{- end }}

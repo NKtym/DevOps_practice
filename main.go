@@ -34,6 +34,46 @@ type HealthResp struct {
 	Time   time.Time `json:"time"`
 }
 
+func partnerHandler(w http.ResponseWriter, r *http.Request) {
+	externalURL := os.Getenv("EXTERNAL_APP_URL")
+	if externalURL == "" {
+		writeJSON(w, map[string]string{
+			"error": "EXTERNAL_APP_URL not configured",
+		}, http.StatusBadRequest)
+		return
+	}
+
+	if !strings.HasPrefix(externalURL, "http") {
+		externalURL = "http://" + externalURL
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(externalURL + "/health")
+	if err != nil {
+		writeJSON(w, map[string]any{
+			"status":      "error",
+			"partner_url": externalURL,
+			"error":       err.Error(),
+		}, http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	var partnerData any
+	_ = json.Unmarshal(body, &partnerData)
+
+	writeJSON(w, map[string]any{
+		"status":         "success",
+		"message":        "✅ Успешное взаимодействие между приложениями разных групп",
+		"my_namespace":   os.Getenv("POD_NAMESPACE"),
+		"partner_url":    externalURL,
+		"partner_status": resp.StatusCode,
+		"partner_data":   partnerData,
+	}, http.StatusOK)
+}
+
 func writeJSON(w http.ResponseWriter, v interface{}, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
@@ -52,12 +92,9 @@ func performCleanup(ctx context.Context) {
 
 func backgroundWorker(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
-
 	log.Println("Background worker: started")
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -66,7 +103,6 @@ func backgroundWorker(ctx context.Context, wg *sync.WaitGroup) {
 			performCleanup(cleanupCtx)
 			cancel()
 			return
-
 		case t := <-ticker.C:
 			log.Printf("Background worker: tick at %s\n", t.UTC().Format(time.RFC3339))
 		}
@@ -90,7 +126,6 @@ func getRunningPodsCount(ctx context.Context) (int, error) {
 	if namespace == "" {
 		return 0, fmt.Errorf("namespace is empty")
 	}
-
 	tokenBytes, err := os.ReadFile(serviceAccountTokenPath)
 	if err != nil {
 		return 0, fmt.Errorf("read token: %w", err)
@@ -99,17 +134,14 @@ func getRunningPodsCount(ctx context.Context) (int, error) {
 	if token == "" {
 		return 0, fmt.Errorf("token is empty")
 	}
-
 	caBytes, err := os.ReadFile(serviceAccountCAPath)
 	if err != nil {
 		return 0, fmt.Errorf("read CA: %w", err)
 	}
-
 	roots := x509.NewCertPool()
 	if ok := roots.AppendCertsFromPEM(caBytes); !ok {
 		return 0, fmt.Errorf("append CA cert failed")
 	}
-
 	host := os.Getenv("KUBERNETES_SERVICE_HOST")
 	port := os.Getenv("KUBERNETES_SERVICE_PORT_HTTPS")
 	if port == "" {
@@ -118,9 +150,7 @@ func getRunningPodsCount(ctx context.Context) (int, error) {
 	if host == "" {
 		return 0, fmt.Errorf("KUBERNETES_SERVICE_HOST is empty")
 	}
-
 	url := fmt.Sprintf("https://%s:%s/api/v1/namespaces/%s/pods", host, port, namespace)
-
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -129,25 +159,21 @@ func getRunningPodsCount(ctx context.Context) (int, error) {
 		},
 		Timeout: 5 * time.Second,
 	}
-
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return 0, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/json")
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("call kubernetes api: %w", err)
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return 0, fmt.Errorf("kubernetes api status %s: %s", resp.Status, strings.TrimSpace(string(body)))
 	}
-
 	var podList struct {
 		Items []struct {
 			Status struct {
@@ -155,24 +181,20 @@ func getRunningPodsCount(ctx context.Context) (int, error) {
 			} `json:"status"`
 		} `json:"items"`
 	}
-
 	if err := json.NewDecoder(resp.Body).Decode(&podList); err != nil {
 		return 0, fmt.Errorf("decode pods list: %w", err)
 	}
-
 	running := 0
 	for _, pod := range podList.Items {
 		if pod.Status.Phase == "Running" {
 			running++
 		}
 	}
-
 	return running, nil
 }
 
 func main() {
 	startedAt := time.Now().UTC()
-
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +205,6 @@ func main() {
 			}, http.StatusServiceUnavailable)
 			return
 		}
-
 		writeJSON(w, RootResp{
 			Message:     "Good",
 			StartedAt:   startedAt,
@@ -198,6 +219,8 @@ func main() {
 		}, http.StatusOK)
 	})
 
+	mux.HandleFunc("/partner", partnerHandler)
+
 	srv := &http.Server{
 		Addr:         ":8080",
 		Handler:      loggingMiddleware(mux),
@@ -208,7 +231,6 @@ func main() {
 
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
-
 	wg.Add(1)
 	go backgroundWorker(ctx, &wg)
 
@@ -223,18 +245,15 @@ func main() {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-stop
 	log.Printf("Signal received: %v", sig)
-
 	cancel()
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
-
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("Server shutdown error: %v\n", err)
 	} else {
 		log.Println("HTTP server stopped gracefully")
 	}
-
 	wg.Wait()
 	log.Println("Background tasks finished")
 }

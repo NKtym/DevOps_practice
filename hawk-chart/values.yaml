@@ -109,12 +109,23 @@ vpa:
   enabled: true
   updateMode: Auto
 
+externalAppUrl: ""
+
 ciliumNetworkPolicy:
   enabled: true
   ingressFromEntities:
     - cluster
   egressToEntities:
     - cluster
+  egressToExternalApps:
+    - serviceName: "is241s07-dev"
+      namespace: "is241"
+      podSelector:
+        app.kubernetes.io/instance: "is241s07-dev"
+    - serviceName: "is241s07-prod"
+      namespace: "is241"
+      podSelector:
+        app.kubernetes.io/instance: "is241s07-prod"
 
 rbac:
   create: true
