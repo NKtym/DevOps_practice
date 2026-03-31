@@ -221,5 +221,5 @@ test-ci:
       sleep 30
       RESPONSE=$(curl -s http://127.0.0.1:8080/)
       echo "$RESPONSE"
-      echo "$RESPONSE" | grep -q '"running_pods":' || {kill $PORT_FORWARD_PID; exit 1; }
+      echo "$RESPONSE" | grep -q '"running_pods":' || { kill $PORT_FORWARD_PID; exit 1; }
       kill $PORT_FORWARD_PID
