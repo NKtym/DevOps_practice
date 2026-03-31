@@ -171,6 +171,32 @@ test-ci:
       helmfile -f helmfile.yaml.gotmpl -e prod -l env=prod template > prod.yaml
     - kubectl apply -f k8s/rbac.yaml
     - |
+      echo "===== DEBUG: pods in namespace ====="
+      kubectl get pod -n iv222 -o wide || true
+
+      echo "===== DEBUG: RBAC check ====="
+      kubectl auth can-i list pods -n iv222 || true
+      kubectl auth can-i create pods/portforward -n iv222 || true
+
+      echo "===== DEBUG: pick app-dev pod ====="
+      POD="$(kubectl get pod -n iv222 -l app.kubernetes.io/instance=app-dev -o jsonpath='{.items[0].metadata.name}')"
+      echo "POD=$POD"
+
+      echo "===== DEBUG: describe pod ====="
+      kubectl describe pod -n iv222 "$POD" || true
+
+      echo "===== DEBUG: previous logs ====="
+      kubectl logs -n iv222 "$POD" --previous || true
+
+      echo "===== DEBUG: current logs ====="
+      kubectl logs -n iv222 "$POD" || true
+
+      echo "===== DEBUG: serviceaccount files ====="
+      kubectl exec -n iv222 "$POD" -- sh -c 'ls -la /var/run/secrets/kubernetes.io/serviceaccount/ || true' || true
+
+      echo "===== DEBUG: k8s env inside pod ====="
+      kubectl exec -n iv222 "$POD" -- sh -c 'env | grep KUBERNETES || true' || true
+    - |
       grep -q "kind: ServiceAccount" dev.yaml || { echo "ServiceAccount отсутствует"; exit 1; }
       awk '
         /^kind: Role$/ { in_role=1 }
