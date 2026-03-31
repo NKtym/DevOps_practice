@@ -31,8 +31,6 @@ build-and-push:
     - docker context use tls-context
     - docker buildx create tls-context --name ci-builder --driver docker-container --use || true
     - docker buildx inspect --bootstrap
-    - helmfile -e dev template
-    - helmfile -e dev diff
 
   script:
     - |
@@ -44,6 +42,8 @@ build-and-push:
         IMAGE_TAG="$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')"
       fi
       echo "Image tag: $IMAGE_TAG"
+      helmfile -e dev template
+      helmfile -e dev diff
     - docker buildx use ci-builder  
     - docker buildx build --builder ci-builder --platform linux/amd64,linux/arm64 --pull -t "${CI_REGISTRY_IMAGE}:${IMAGE_TAG}" -t "${CI_REGISTRY_IMAGE}:latest" -t "${HAWK_REGISTRY_IMAGE}:${IMAGE_TAG}" -t "${HAWK_REGISTRY_IMAGE}:latest" --push .
   rules:
