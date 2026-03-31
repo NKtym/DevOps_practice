@@ -4,7 +4,7 @@ WORKDIR /src
 COPY go.mod ./
 COPY . .
 ENV CGO_ENABLED=0
-RUN GOOS=linux GOARCH=${TARGETARCH} \
+RUN GOOS=linux \
     go build -o /app/app ./...
 
 FROM --platform=$TARGETPLATFORM alpine:3.18
