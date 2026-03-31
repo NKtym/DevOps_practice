@@ -7,7 +7,7 @@ ENV CGO_ENABLED=0
 RUN GOOS=linux GOARCH=${TARGETARCH} \
     go build -o /app/app ./...
 
-FROM alpine:3.18
+FROM --platform=$TARGETPLATFORM alpine:3.18
 COPY --from=builder /app/app /usr/local/bin/app
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/app"]
