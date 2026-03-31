@@ -1,25 +1,19 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: ci-portforward
+  name: ci-pod-access
   namespace: iv222
   labels:
     owner: iv222
 rules:
   - apiGroups: [""]
-    resources:
-      - pods
-      - pods/portforward
-    verbs:
-      - get
-      - list
-      - watch
-      - create
+    resources: ["pods", "pods/exec"]
+    verbs: ["get", "list", "create", "delete", "exec"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: ci-portforward
+  name: ci-pod-access-binding
   namespace: iv222
   labels:
     owner: iv222
@@ -30,4 +24,4 @@ subjects:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: ci-portforward
+  name: ci-pod-access

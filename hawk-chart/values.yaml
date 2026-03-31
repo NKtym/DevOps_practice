@@ -110,7 +110,7 @@ vpa:
   updateMode: Auto
 
 ciliumNetworkPolicy:
-  enabled: false
+  enabled: true
   ingressFromEntities:
     - cluster
   egressToEntities:
