@@ -109,8 +109,6 @@ vpa:
   enabled: true
   updateMode: Auto
 
-externalAppUrl: ""
-
 ciliumNetworkPolicy:
   enabled: true
   ingressFromEntities:
@@ -129,3 +127,5 @@ rbac:
     - apiGroups: [""]
       resources: ["pods"]
       verbs: ["list"]
+
+externalAppUrl: ""
