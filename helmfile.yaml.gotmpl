@@ -21,7 +21,7 @@ releases:
     values:
       - image:
           repository: {{ env "HAWK_REGISTRY_IMAGE" | quote}}
-          tag: {{ default (env "IMAGE_TAG") "latest" | quote }}
+          tag: {{ requiredEnv "IMAGE_TAG" | quote }}
       - replicaCount: {{ default .Environment.Values.REPLICA_COUNT 1 }}
       - owner: {{ default .Environment.Values.APP_OWNER "" }}
       - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
@@ -45,7 +45,7 @@ releases:
     values:
       - image:
           repository: {{ env "HAWK_REGISTRY_IMAGE" | quote}}
-          tag: {{ default (env "IMAGE_TAG") "latest" | quote }}
+          tag: {{ requiredEnv "IMAGE_TAG" | quote }}
       - replicaCount: {{ default .Environment.Values.REPLICA_COUNT 1 }}
       - owner: {{ default .Environment.Values.APP_OWNER "" }}
       - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
