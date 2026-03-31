@@ -1,9 +1,10 @@
+ARG TARGETARCH
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
 WORKDIR /src
 COPY go.mod ./
 COPY . .
 ENV CGO_ENABLED=0
-RUN GOOS=linux GOARCH=arm64 \
+RUN GOOS=linux GOARCH=$TARGETARCH \
     go build -o /app/app ./...
 
 FROM --platform=$TARGETPLATFORM alpine:3.18
