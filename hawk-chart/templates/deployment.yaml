@@ -39,11 +39,11 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion | default \"latest\" }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 8080
+              containerPort: {{ .Values.service.port }}
               protocol: TCP
           {{- with .Values.livenessProbe }}
           livenessProbe:
@@ -55,9 +55,10 @@ spec:
           {{- end }}
           {{- with .Values.resources }}
           resources:
-            env:
-            - name: EXTERNAL_APP_URL
-              value: {{ .Values.externalAppUrl | default "" | quote }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.env }}
+          env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.volumeMounts }}
