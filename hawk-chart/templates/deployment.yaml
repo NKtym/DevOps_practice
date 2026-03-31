@@ -57,7 +57,7 @@ spec:
           resources:
             env:
             - name: EXTERNAL_APP_URL
-              value: {{ .Values.externalAppUrl | quote }}
+              value: {{ .Values.externalAppUrl | default "" | quote }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.volumeMounts }}
