@@ -35,6 +35,8 @@ releases:
           className: hawk-dev
           annotations:
             traefik.ingress.kubernetes.io/router.middlewares: "iv222-app-dev-hawk-chart-headers@kubernetescrd"
+            traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+            traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
             - host: "iv222s03-dev.hawk-dev.csc.sibsutis.ru"
               paths:
@@ -65,6 +67,8 @@ releases:
           className: hawk-dev
           annotations:
             traefik.ingress.kubernetes.io/router.middlewares: "iv222-app-prod-hawk-chart-headers@kubernetescrd"
+            traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+            traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
             - host: "iv222s03-prod.hawk-dev.csc.sibsutis.ru"
               paths:
