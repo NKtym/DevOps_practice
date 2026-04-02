@@ -100,7 +100,10 @@ deployTimestamp: ""
 
 middleware:
   enabled: true
-  spec: {}
+  spec:
+    ipAllowList:
+      sourceRange:
+        - "0.0.0.0/0"
 
 vpa:
   enabled: true
