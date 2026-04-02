@@ -128,10 +128,6 @@ rbac:
       resources: ["pods"]
       verbs: ["list"]
 
-env:
-  - name: EXTERNAL_APP_URL
-    value: "http://is241s07-dev.is241.svc:8080"
-  - name: POD_NAMESPACE
-    valueFrom:
-      fieldRef:
-        fieldPath: metadata.namespace
+externalAppUrl: ""
+
+env: []

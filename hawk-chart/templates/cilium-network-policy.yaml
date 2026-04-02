@@ -12,43 +12,29 @@ spec:
 
   ingress:
     - fromEntities:
-        - cluster
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
-
+      - cluster
     - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/instance: app-dev-hawk-chart
-            k8s:io.kubernetes.pod.namespace: is241
+      - matchLabels:
+          app.kubernetes.io/instance: is241s07-dev
+        namespace:
+          matchName: is241
       toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
+      - ports:
+        - port: "8080"
+          protocol: TCP
 
   egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s-app: kube-dns
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
-
     - toEntities:
-        - cluster
-
+      - cluster
     {{- range .Values.ciliumNetworkPolicy.egressToExternalApps }}
     - toEndpoints:
-        - matchLabels:
-            app.kubernetes.io/instance: {{ .serviceName | quote }}
-            k8s:io.kubernetes.pod.namespace: {{ .namespace }}
+      - matchLabels:
+          app.kubernetes.io/instance: {{ .serviceName | quote }}
+        namespace:
+          matchName: {{ .namespace }}
       toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
+      - ports:
+        - port: "8080"
+          protocol: TCP
     {{- end }}
 {{- end }}
