@@ -212,7 +212,6 @@ test-ci:
 
       echo "===== DEBUG: log ====="
       kubectl logs -n iv222 deploy/app-dev-hawk-chart
-      kubectl port-forward svc/app-dev-hawk-chart 8080:8080 -n iv222
       curl localhost:8080
       curl -vk https://iv222s03-dev.hawk-dev.csc.sibsutis.ru/
 
