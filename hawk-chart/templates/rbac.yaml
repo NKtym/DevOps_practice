@@ -1,27 +1,25 @@
+{{- if .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: ci-pod-access
-  namespace: iv222
+  name: {{ include "hawk-chart.fullname" . }}-app
   labels:
-    owner: iv222
+    {{- include "hawk-chart.labels" . | nindent 4 }}
 rules:
-  - apiGroups: [""]
-    resources: ["pods", "pods/exec"]
-    verbs: ["get", "list", "create", "delete"]
+  {{- toYaml .Values.rbac.rules | nindent 2 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: ci-pod-access-binding
-  namespace: iv222
+  name: {{ include "hawk-chart.fullname" . }}-app
   labels:
-    owner: iv222
+    {{- include "hawk-chart.labels" . | nindent 4 }}
 subjects:
   - kind: ServiceAccount
-    name: ci
-    namespace: iv222
+    name: {{ include "hawk-chart.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: ci-pod-access
+  name: {{ include "hawk-chart.fullname" . }}-app
+{{- end }}
