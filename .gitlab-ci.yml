@@ -216,7 +216,7 @@ test-ci:
       grep -q "kind: Middleware" dev.yaml || { echo "Middleware отсутствует"; exit 1; }
       grep -q "kind: VerticalPodAutoscaler" dev.yaml || { echo "VPA отсутствует"; exit 1; }
       kubectl get pod -n iv222
-      kubectl port-forward -n iv222 svc/app-dev-hawk-chart 8080:80 &
+      kubectl port-forward -n iv222 svc/app-dev-hawk-chart 8080:8080 &
       PORT_FORWARD_PID=$!
       sleep 60
       RESPONSE=$(curl -s http://127.0.0.1:8080/)
