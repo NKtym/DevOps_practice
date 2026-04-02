@@ -1,36 +1,27 @@
-{{- if .Values.ciliumNetworkPolicy.enabled }}
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
   name: {{ include "hawk-chart.fullname" . }}
   labels:
     {{- include "hawk-chart.labels" . | nindent 4 }}
-spec:
-  endpointSelector:
-    matchLabels:
-      {{- include "hawk-chart.selectorLabels" . | nindent 6 }}
-
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/instance: app-dev-hawk-chart
-            k8s:io.kubernetes.pod.namespace: is241
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
-
-  {{- if .Values.ciliumNetworkPolicy.egressToExternalApps }}
-  egress:
-    {{- range .Values.ciliumNetworkPolicy.egressToExternalApps }}
-    - toEndpoints:
-        - matchLabels:
-            app.kubernetes.io/instance: {{ .serviceName | quote }}
-            k8s:io.kubernetes.pod.namespace: {{ .namespace | quote }}
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
-    {{- end }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ index .Values.ingress.hosts 0 "host" | quote }}
+      http:
+        paths:
+          {{- range (index .Values.ingress.hosts 0 "paths") }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "hawk-chart.fullname" $ }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
 {{- end }}
