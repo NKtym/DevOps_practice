@@ -66,7 +66,7 @@ func partnerHandler(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, map[string]any{
 		"status":         "success",
-		"message":        "✅ Успешное взаимодействие между приложениями разных групп",
+		"message":        "Успешное взаимодействие между приложениями разных групп",
 		"my_namespace":   os.Getenv("POD_NAMESPACE"),
 		"partner_url":    externalURL,
 		"partner_status": resp.StatusCode,
@@ -194,21 +194,51 @@ func getRunningPodsCount(ctx context.Context) (int, error) {
 }
 
 func main() {
-	startedAt := time.Now().UTC()
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		runningPods, err := getRunningPodsCount(r.Context())
 		if err != nil {
-			writeJSON(w, map[string]string{
-				"error": err.Error(),
-			}, http.StatusServiceUnavailable)
+			writeJSON(w, map[string]string{"error": err.Error()}, http.StatusServiceUnavailable)
 			return
 		}
-		writeJSON(w, RootResp{
-			Message:     "Good",
-			StartedAt:   startedAt,
-			RunningPods: runningPods,
+		externalURL := os.Getenv("EXTERNAL_APP_URL")
+		if externalURL == "" {
+			externalURL = "http://is241s07-dev.is241.svc:8080"
+		}
+		if !strings.HasPrefix(externalURL, "http") {
+			externalURL = "http://" + externalURL
+		}
+		client := &http.Client{Timeout: 10 * time.Second}
+		partnerResp, partnerErr := client.Get(externalURL + "/health")
+
+		partnerData := map[string]any{
+			"status": "error",
+			"url":    externalURL + "/health",
+			"error":  "Service Unavailable",
+		}
+		if partnerErr == nil && partnerResp.StatusCode == http.StatusOK {
+			defer partnerResp.Body.Close()
+			body, _ := io.ReadAll(partnerResp.Body)
+			_ = json.Unmarshal(body, &partnerData)
+			partnerData = map[string]any{
+				"status": "success",
+				"url":    externalURL + "/health",
+				"data":   partnerData,
+			}
+		} else if partnerErr != nil {
+			partnerData["error"] = partnerErr.Error()
+		}
+		writeJSON(w, map[string]any{
+			"message": "Hello from containerized app!",
+			"status":  "running",
+			"pod_count": map[string]any{
+				"count":      runningPods,
+				"namespace":  os.Getenv("POD_NAMESPACE"),
+				"total_pods": runningPods,
+			},
+			"external_app_data": partnerData,
+			"namespace":         os.Getenv("POD_NAMESPACE"),
 		}, http.StatusOK)
 	})
 
