@@ -11,31 +11,34 @@ spec:
       {{- include "hawk-chart.selectorLabels" . | nindent 6 }}
 
   ingress:
+    {{- if .Values.ciliumNetworkPolicy.allowCluster }}
     - fromEntities:
       - cluster
+    {{- end }}
+    {{- range .Values.ciliumNetworkPolicy.peers }}
     - fromEndpoints:
       - matchLabels:
-          app.kubernetes.io/instance: is241s07-dev
-        namespace:
-          matchName: is241
+          k8s:io.kubernetes.pod.namespace: {{ .namespace | quote }}
+          app.kubernetes.io/instance: {{ .instance | quote }}
       toPorts:
       - ports:
-        - port: "8080"
+        - port: {{ $.Values.service.port | quote }}
           protocol: TCP
-
+    {{- end }}
 
   egress:
+    {{- if .Values.ciliumNetworkPolicy.allowCluster }}
     - toEntities:
       - cluster
-    {{- range .Values.ciliumNetworkPolicy.egressToExternalApps }}
+    {{- end }}
+    {{- range .Values.ciliumNetworkPolicy.peers }}
     - toEndpoints:
       - matchLabels:
-          app.kubernetes.io/instance: {{ .serviceName | quote }}
-        namespace:
-          matchName: {{ .namespace }}
+          k8s:io.kubernetes.pod.namespace: {{ .namespace | quote }}
+          app.kubernetes.io/instance: {{ .instance | quote }}
       toPorts:
       - ports:
-        - port: "8080"
+        - port: {{ $.Values.service.port | quote }}
           protocol: TCP
     {{- end }}
 {{- end }}

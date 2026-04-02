@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -38,7 +39,6 @@ func writeJSON(w http.ResponseWriter, v any, code int) {
 func normalizeExternalURL(raw string) string {
 	raw = strings.TrimSpace(raw)
 	raw = strings.TrimRight(raw, "/")
-
 	if raw == "" {
 		return ""
 	}
@@ -47,7 +47,17 @@ func normalizeExternalURL(raw string) string {
 		raw = "http://" + raw
 	}
 
-	return raw
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+
+	if parsed.Host != "" && !strings.Contains(parsed.Host, ":") {
+		parsed.Host = parsed.Host + ":8080"
+	}
+
+	parsed.Path = strings.TrimRight(parsed.Path, "/")
+	return strings.TrimRight(parsed.String(), "/")
 }
 
 func fetchExternalHealth(ctx context.Context) (map[string]any, error) {
@@ -88,10 +98,11 @@ func fetchExternalHealth(ctx context.Context) (map[string]any, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		return map[string]any{
-			"status":       "error",
-			"url":          externalURL + "/health",
-			"partner_code": resp.StatusCode,
-			"partner_body": payload,
+			"status":        "error",
+			"url":           externalURL + "/health",
+			"partner_code":  resp.StatusCode,
+			"partner_body":  payload,
+			"partner_state": resp.Status,
 		}, nil
 	}
 
@@ -99,7 +110,7 @@ func fetchExternalHealth(ctx context.Context) (map[string]any, error) {
 		"status":       "success",
 		"url":          externalURL + "/health",
 		"partner_code": resp.StatusCode,
-		"data":         payload,
+		"partner_body": payload,
 	}, nil
 }
 

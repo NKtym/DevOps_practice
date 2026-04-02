@@ -59,8 +59,11 @@ spec:
           {{- end }}
 
           env:
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             - name: EXTERNAL_APP_URL
-              value: {{ .Values.externalAppUrl | default "http://is241s07-dev.is241.svc" | quote }}
+              value: {{ required "values.externalAppUrl must be set" .Values.externalAppUrl | quote }}
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:

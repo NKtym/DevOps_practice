@@ -22,12 +22,12 @@ serviceAccount:
 podAnnotations: {}
 podLabels: {}
 
-podSecurityContext: 
+podSecurityContext:
   runAsNonRoot: true
   runAsUser: 1000
   fsGroup: 2000
 
-securityContext: 
+securityContext:
   runAsNonRoot: true
   runAsUser: 1000
   allowPrivilegeEscalation: false
@@ -64,7 +64,7 @@ httpRoute:
             type: PathPrefix
             value: /headers
 
-resources: 
+resources:
   requests:
     memory: "16Mi"
     cpu: "50m"
@@ -76,6 +76,7 @@ livenessProbe:
   httpGet:
     path: /health
     port: http
+
 readinessProbe:
   httpGet:
     path: /health
@@ -95,7 +96,6 @@ tolerations: []
 affinity: {}
 
 kind: Deployment
-
 deployTimestamp: ""
 
 middleware:
@@ -111,15 +111,8 @@ vpa:
 
 ciliumNetworkPolicy:
   enabled: true
-  ingressFromEntities:
-    - cluster
-  egressToEntities:
-    - cluster
-  egressToExternalApps:
-    - serviceName: "is241s07-dev"
-      namespace: "is241"
-    - serviceName: "is241s07-prod"
-      namespace: "is241"
+  allowCluster: true
+  peers: []
 
 rbac:
   create: true

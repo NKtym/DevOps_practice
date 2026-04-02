@@ -11,7 +11,6 @@ environments:
 ---
 
 releases:
-  # Dev release
   - name: app-dev
     namespace: iv222
     chart: ./hawk-chart
@@ -20,11 +19,17 @@ releases:
       env: dev
     values:
       - image:
-          repository: {{ env "HAWK_REGISTRY_IMAGE" | quote}}
+          repository: {{ env "HAWK_REGISTRY_IMAGE" | quote }}
           tag: {{ requiredEnv "IMAGE_TAG" | quote }}
       - replicaCount: {{ default .Environment.Values.REPLICA_COUNT 1 }}
       - owner: {{ default .Environment.Values.APP_OWNER "" }}
       - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
+      - externalAppUrl: {{ .Environment.Values.externalAppUrl | quote }}
+      - ciliumNetworkPolicy:
+          enabled: true
+          allowCluster: true
+          peers:
+{{ toYaml .Environment.Values.networkPeers | indent 12 }}
       - ingress:
           enabled: true
           className: hawk-dev
@@ -44,11 +49,17 @@ releases:
       env: prod
     values:
       - image:
-          repository: {{ env "HAWK_REGISTRY_IMAGE" | quote}}
+          repository: {{ env "HAWK_REGISTRY_IMAGE" | quote }}
           tag: {{ requiredEnv "IMAGE_TAG" | quote }}
       - replicaCount: {{ default .Environment.Values.REPLICA_COUNT 1 }}
       - owner: {{ default .Environment.Values.APP_OWNER "" }}
       - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
+      - externalAppUrl: {{ .Environment.Values.externalAppUrl | quote }}
+      - ciliumNetworkPolicy:
+          enabled: true
+          allowCluster: true
+          peers:
+{{ toYaml .Environment.Values.networkPeers | indent 12 }}
       - ingress:
           enabled: true
           className: hawk-dev
