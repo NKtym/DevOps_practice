@@ -11,5 +11,5 @@ spec:
     kind: {{ .Values.kind }}
     name: {{ include "hawk-chart.fullname" . }}
   updatePolicy:
-    updateMode: {{ .Values.vpa.updateMode }}
+    updateMode: "{{ .Values.vpa.updateMode }}"
 {{- end }}
