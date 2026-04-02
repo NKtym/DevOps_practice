@@ -108,7 +108,7 @@ middleware:
 
 vpa:
   enabled: true
-  updateMode: Auto
+  updateMode: off
 
 ciliumNetworkPolicy:
   enabled: true

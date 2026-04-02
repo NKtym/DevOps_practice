@@ -218,6 +218,25 @@ test-ci:
       grep -q "ServiceAccount" dev.yaml || { echo "RoleBinding не содержит ServiceAccount"; exit 1; }
       grep -q "kind: Middleware" dev.yaml || { echo "Middleware отсутствует"; exit 1; }
       grep -q "kind: VerticalPodAutoscaler" dev.yaml || { echo "VPA отсутствует"; exit 1; }
+      grep -q "updateMode: Off" dev.yaml || { echo "VPA должен быть в режиме Off"; exit 1; }
+            echo "===== DEBUG: VPA ====="
+      kubectl get vpa -n iv222 app-dev-hawk-chart -o yaml || true
+      VPA_MODE=""
+      CPU_TARGET=""
+      MEM_TARGET=""
+      for i in $(seq 1 60); do
+        VPA_MODE="$(kubectl get vpa -n iv222 app-dev-hawk-chart -o jsonpath='{.spec.updatePolicy.updateMode}' 2>/dev/null || true)"
+        CPU_TARGET="$(kubectl get vpa -n iv222 app-dev-hawk-chart -o jsonpath='{.status.recommendation.containerRecommendations[0].target.cpu}' 2>/dev/null || true)"
+        MEM_TARGET="$(kubectl get vpa -n iv222 app-dev-hawk-chart -o jsonpath='{.status.recommendation.containerRecommendations[0].target.memory}' 2>/dev/null || true)"
+        if [ "$VPA_MODE" = "Off" ] && [ -n "$CPU_TARGET" ] && [ -n "$MEM_TARGET" ]; then
+          echo "VPA recommendation ready: cpu=$CPU_TARGET memory=$MEM_TARGET"
+          break
+        fi
+        sleep 5
+      done
+      [ "$VPA_MODE" = "Off" ] || { echo "VPA mode is not Off: $VPA_MODE"; exit 1; }
+      [ -n "$CPU_TARGET" ] || { echo "VPA recommendation cpu is empty"; exit 1; }
+      [ -n "$MEM_TARGET" ] || { echo "VPA recommendation memory is empty"; exit 1; }
       kubectl get pod -n iv222
       set -euo pipefail
       kubectl port-forward -n iv222 svc/app-dev-hawk-chart 8080:8080 &
