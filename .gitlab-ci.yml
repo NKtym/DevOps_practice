@@ -215,7 +215,9 @@ test-ci:
       kubectl port-forward svc/app-dev-hawk-chart 8080:8080 -n iv222
       curl localhost:8080
       curl -vk https://iv222s03-dev.hawk-dev.csc.sibsutis.ru/
+
     - kubectl get ingress -n iv222
+    
     - |
       grep -q "kind: ServiceAccount" dev.yaml || { echo "ServiceAccount отсутствует"; exit 1; }
       grep -q "kind: RoleBinding" dev.yaml || { echo "RoleBinding отсутствует"; exit 1; }
