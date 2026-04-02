@@ -59,7 +59,7 @@ func fetchExternalHealth(ctx context.Context) (map[string]any, error) {
 		}, fmt.Errorf("EXTERNAL_APP_URL not configured")
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 20 * time.Second}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, externalURL+"/health", nil)
 	if err != nil {
 		return map[string]any{
@@ -125,7 +125,7 @@ func backgroundWorker(ctx context.Context, wg *sync.WaitGroup) {
 		select {
 		case <-ctx.Done():
 			log.Println("Background worker: received shutdown signal, cleaning up")
-			cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			cleanupCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			performCleanup(cleanupCtx)
 			cancel()
 			return
@@ -189,7 +189,7 @@ func getRunningPodsCount(ctx context.Context) (int, error) {
 				RootCAs: roots,
 			},
 		},
-		Timeout: 5 * time.Second,
+		Timeout: 15 * time.Second,
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -284,8 +284,8 @@ func main() {
 	srv := &http.Server{
 		Addr:         ":" + defaultPort,
 		Handler:      loggingMiddleware(mux),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 20 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
 
@@ -308,7 +308,7 @@ func main() {
 
 	cancel()
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer shutdownCancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("Server shutdown error: %v\n", err)
