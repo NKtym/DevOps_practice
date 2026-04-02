@@ -9,26 +9,24 @@ spec:
   endpointSelector:
     matchLabels:
       {{- include "hawk-chart.selectorLabels" . | nindent 6 }}
+
   ingress:
     - fromEndpoints:
         - matchLabels:
             app.kubernetes.io/instance: app-dev-hawk-chart
-          namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: is241
+            k8s:io.kubernetes.pod.namespace: is241
       toPorts:
         - ports:
             - port: "8080"
               protocol: TCP
+
   {{- if .Values.ciliumNetworkPolicy.egressToExternalApps }}
   egress:
     {{- range .Values.ciliumNetworkPolicy.egressToExternalApps }}
     - toEndpoints:
         - matchLabels:
             app.kubernetes.io/instance: {{ .serviceName | quote }}
-          namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: {{ .namespace }}
+            k8s:io.kubernetes.pod.namespace: {{ .namespace | quote }}
       toPorts:
         - ports:
             - port: "8080"
