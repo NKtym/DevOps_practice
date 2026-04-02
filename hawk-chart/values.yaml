@@ -101,9 +101,10 @@ deployTimestamp: ""
 middleware:
   enabled: true
   spec:
-    ipAllowList:
-      sourceRange:
-        - "0.0.0.0/0"
+    headers:
+      customResponseHeaders:
+        X-Owner: "iv222"
+        X-App-Name: "hawk-chart"
 
 vpa:
   enabled: true
