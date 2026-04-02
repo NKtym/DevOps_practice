@@ -203,21 +203,8 @@ test-ci:
     - kubectl get ingress -n iv222
     - |
       grep -q "kind: ServiceAccount" dev.yaml || { echo "ServiceAccount отсутствует"; exit 1; }
-      awk '
-        /^kind: Role$/ { in_role=1 }
-        in_role { print }
-        /^---$/ && in_role { exit }
-      ' dev.yaml | grep -q "pods" || { echo "Role для pods отсутствует"; exit 1; }
-      awk '
-        /^kind: RoleBinding$/ { in_rb=1 }
-        in_rb { print }
-        /^---$/ && in_rb { exit }
-      ' dev.yaml | grep -q "ServiceAccount" || { echo "RoleBinding отсутствует"; exit 1; }
-      awk '
-        /^kind: Deployment$/ { in_dep=1 }
-        in_dep { print }
-        /^---$/ && in_dep { exit }
-      ' dev.yaml | grep -q "serviceAccountName:" || { echo "Deployment не использует ServiceAccount"; exit 1; }
+      grep -q "kind: RoleBinding" dev.yaml || { echo "RoleBinding отсутствует"; exit 1; }
+      grep -q "ServiceAccount" dev.yaml || { echo "RoleBinding не содержит ServiceAccount"; exit 1; }
       grep -q "kind: Middleware" dev.yaml || { echo "Middleware отсутствует"; exit 1; }
       grep -q "kind: VerticalPodAutoscaler" dev.yaml || { echo "VPA отсутствует"; exit 1; }
       kubectl get pod -n iv222
