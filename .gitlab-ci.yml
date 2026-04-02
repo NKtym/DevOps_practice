@@ -210,11 +210,6 @@ test-ci:
       kubectl get svc -n iv222
       kubectl get endpoints -n iv222
 
-      echo "===== DEBUG: log ====="
-      kubectl logs -n iv222 deploy/app-dev-hawk-chart
-      curl localhost:8080
-      curl -vk https://iv222s03-dev.hawk-dev.csc.sibsutis.ru/
-
     - kubectl get ingress -n iv222
 
     - |
@@ -239,6 +234,10 @@ test-ci:
         fi
         sleep 1
       done
+      echo "===== DEBUG: log ====="
+      kubectl logs -n iv222 deploy/app-dev-hawk-chart
+      curl localhost:8080
+      curl -vk https://iv222s03-dev.hawk-dev.csc.sibsutis.ru/
       RESPONSE=$(curl -fsS --max-time 20 http://127.0.0.1:8080/)
       echo "$RESPONSE"
       echo "$RESPONSE" | grep -q '"pod_count":' || { echo "Root endpoint вернул неожиданный ответ"; exit 1; }
