@@ -20,7 +20,6 @@ spec:
             - port: "8080"
               protocol: TCP
 
-  {{- if .Values.ciliumNetworkPolicy.egressToExternalApps }}
   egress:
     {{- range .Values.ciliumNetworkPolicy.egressToExternalApps }}
     - toEndpoints:
@@ -31,6 +30,5 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
-    {{- end }}
   {{- end }}
 {{- end }}
