@@ -10,11 +10,15 @@ spec:
     matchLabels:
       {{- include "hawk-chart.selectorLabels" . | nindent 6 }}
 
-  {{- if .Values.ciliumNetworkPolicy.ingressFromEntities }}
   ingress:
-    - fromEntities:
-      {{- toYaml .Values.ciliumNetworkPolicy.ingressFromEntities | nindent 8 }}
-  {{- end }}
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/instance: app-dev-hawk-chart
+            k8s:io.kubernetes.pod.namespace: is241
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
 
   {{- if .Values.ciliumNetworkPolicy.egressToExternalApps }}
   egress:
@@ -22,10 +26,7 @@ spec:
     - toEndpoints:
         - matchLabels:
             app.kubernetes.io/instance: {{ .serviceName | quote }}
-          matchExpressions:
-            - key: io.kubernetes.pod.namespace
-              operator: In
-              values: [ "{{ .namespace }}" ]
+            k8s:io.kubernetes.pod.namespace: {{ .namespace }}
       toPorts:
         - ports:
             - port: "8080"
