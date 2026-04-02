@@ -11,6 +11,13 @@ spec:
       {{- include "hawk-chart.selectorLabels" . | nindent 6 }}
 
   ingress:
+    - fromEntities:
+        - cluster
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+
     - fromEndpoints:
         - matchLabels:
             app.kubernetes.io/instance: app-dev-hawk-chart
@@ -21,6 +28,19 @@ spec:
               protocol: TCP
 
   egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+
+    - toEntities:
+        - cluster
+
     {{- range .Values.ciliumNetworkPolicy.egressToExternalApps }}
     - toEndpoints:
         - matchLabels:
@@ -30,5 +50,5 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
-  {{- end }}
+    {{- end }}
 {{- end }}
