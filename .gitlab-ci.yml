@@ -200,6 +200,7 @@ test-ci:
 
       echo "===== DEBUG: k8s env inside pod ====="
       kubectl exec -n iv222 "$POD" -- sh -c 'env | grep KUBERNETES || true' || true
+    - kubectl get ingress -n iv222
     - |
       grep -q "kind: ServiceAccount" dev.yaml || { echo "ServiceAccount отсутствует"; exit 1; }
       awk '
