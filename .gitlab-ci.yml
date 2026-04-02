@@ -231,10 +231,3 @@ test-ci:
       RESPONSE_PARTNER=$(curl -s --max-time 30 http://127.0.0.1:8080/partner)
       echo "Partner response: $RESPONSE_PARTNER"
       kill $PORT_FORWARD_PID 2>/dev/null || true
-#      echo "$RESPONSE_PARTNER" | grep -q '"status": "success"' || {
-#        kill $PORT_FORWARD_PID 2>/dev/null || true
-#        exit 1
-#      }
-#      echo "$RESPONSE_PARTNER" | grep -q '"partner_data"' || {
-#        echo "В /partner нет partner_data"
-#      }
