@@ -220,8 +220,8 @@ test-ci:
       grep -q "ServiceAccount" dev.yaml || { echo "RoleBinding не содержит ServiceAccount"; exit 1; }
       grep -q "kind: Middleware" dev.yaml || { echo "Middleware отсутствует"; exit 1; }
       grep -q "kind: VerticalPodAutoscaler" dev.yaml || { echo "VPA отсутствует"; exit 1; }
-      grep -q "updateMode: "Off"" dev.yaml || { echo "VPA должен быть в режиме Off"; exit 1; }
-            echo "===== DEBUG: VPA ====="
+      grep -q "updateMode: Off" dev.yaml || { echo "VPA должен быть в режиме Off"; exit 1; }
+      echo "===== DEBUG: VPA ====="
       kubectl get vpa -n iv222 app-dev-hawk-chart -o yaml || true
       VPA_MODE=""
       CPU_TARGET=""
