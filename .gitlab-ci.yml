@@ -217,7 +217,7 @@ test-ci:
       curl -vk https://iv222s03-dev.hawk-dev.csc.sibsutis.ru/
 
     - kubectl get ingress -n iv222
-    
+
     - |
       grep -q "kind: ServiceAccount" dev.yaml || { echo "ServiceAccount отсутствует"; exit 1; }
       grep -q "kind: RoleBinding" dev.yaml || { echo "RoleBinding отсутствует"; exit 1; }
@@ -225,13 +225,24 @@ test-ci:
       grep -q "kind: Middleware" dev.yaml || { echo "Middleware отсутствует"; exit 1; }
       grep -q "kind: VerticalPodAutoscaler" dev.yaml || { echo "VPA отсутствует"; exit 1; }
       kubectl get pod -n iv222
+      set -euo pipefail
       kubectl port-forward -n iv222 svc/app-dev-hawk-chart 8080:8080 &
       PORT_FORWARD_PID=$!
-      sleep 60
-      RESPONSE=$(curl -s --max-time 20 http://127.0.0.1:8080/)
+      cleanup() {
+        kill "$PORT_FORWARD_PID" 2>/dev/null || true
+        wait "$PORT_FORWARD_PID" 2>/dev/null || true
+      }
+      trap cleanup EXIT
+      for i in $(seq 1 30); do
+        if curl -fsS --max-time 2 http://127.0.0.1:8080/health >/dev/null; then
+          echo "Port-forward is ready"
+          break
+        fi
+        sleep 1
+      done
+      RESPONSE=$(curl -fsS --max-time 20 http://127.0.0.1:8080/)
       echo "$RESPONSE"
-      echo "$RESPONSE" | grep -q '"running_pods":' || { echo "WARNING: Root endpoint вернул ошибку"; }
-      kill $PORT_FORWARD_PID
-      RESPONSE_PARTNER=$(curl -s --max-time 30 http://127.0.0.1:8080/partner)
+      echo "$RESPONSE" | grep -q '"pod_count":' || { echo "Root endpoint вернул неожиданный ответ"; exit 1; }
+      RESPONSE_PARTNER=$(curl -fsS --max-time 30 http://127.0.0.1:8080/partner)
       echo "Partner response: $RESPONSE_PARTNER"
-      kill $PORT_FORWARD_PID 2>/dev/null || true
+      echo "$RESPONSE_PARTNER" | grep -q '"external_app"' || { echo "Partner endpoint вернул неожиданный ответ"; exit 1; }
