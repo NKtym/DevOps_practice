@@ -1,11 +1,8 @@
 environments:
-  dev:
+  default:
     values:
       - environments/common.env.yaml
       - environments/dev/env.yaml
-  prod:
-    values:
-      - environments/common.env.yaml
       - environments/prod/env.yaml
 
 ---
@@ -21,15 +18,15 @@ releases:
       - image:
           repository: {{ env "HAWK_REGISTRY_IMAGE" | quote }}
           tag: {{ requiredEnv "IMAGE_TAG" | quote }}
-      - replicaCount: {{ default .Environment.Values.REPLICA_COUNT 1 }}
-      - owner: {{ default .Environment.Values.APP_OWNER "" }}
-      - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
-      - externalAppUrl: {{ .Environment.Values.externalAppUrl | quote }}
+      - replicaCount: 1
+      - owner: "iv222"
+      - externalAppUrl: "is241s07-dev-app-chart.is241.svc"
       - ciliumNetworkPolicy:
           enabled: true
           allowCluster: true
           peers:
-{{ toYaml .Environment.Values.networkPeers | indent 12 }}
+            - namespace: is241
+              instance: is241s07-dev
       - ingress:
           enabled: true
           className: hawk-dev
@@ -53,15 +50,15 @@ releases:
       - image:
           repository: {{ env "HAWK_REGISTRY_IMAGE" | quote }}
           tag: {{ requiredEnv "IMAGE_TAG" | quote }}
-      - replicaCount: {{ default .Environment.Values.REPLICA_COUNT 1 }}
-      - owner: {{ default .Environment.Values.APP_OWNER "" }}
-      - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
-      - externalAppUrl: {{ .Environment.Values.externalAppUrl | quote }}
+      - replicaCount: 2
+      - owner: "iv222"
+      - externalAppUrl: "is241s07-prod-app-chart.is241.svc"
       - ciliumNetworkPolicy:
           enabled: true
           allowCluster: true
           peers:
-{{ toYaml .Environment.Values.networkPeers | indent 12 }}
+            - namespace: is241
+              instance: is241s07-prod
       - ingress:
           enabled: true
           className: hawk-dev
