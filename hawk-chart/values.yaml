@@ -112,7 +112,7 @@ vpa:
 
 ciliumNetworkPolicy:
   enabled: true
-  allowCluster: true
+  allowCluster: false
   peers: 
     - namespace: is241
       instance: is241s07-dev
