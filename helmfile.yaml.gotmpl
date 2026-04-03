@@ -1,39 +1,38 @@
 environments:
-  default:
+  dev:
     values:
       - environments/common.env.yaml
       - environments/dev/env.yaml
+  prod:
+    values:
+      - environments/common.env.yaml
       - environments/prod/env.yaml
 
 ---
 
 releases:
   - name: app-dev
+    installed: {{ eq .Environment.Name "dev" }}
     namespace: iv222
     chart: ./hawk-chart
-    createNamespace: false
     labels:
       env: dev
     values:
       - image:
           repository: {{ env "HAWK_REGISTRY_IMAGE" | quote }}
           tag: {{ requiredEnv "IMAGE_TAG" | quote }}
-      - replicaCount: 1
-      - owner: "iv222"
-      - externalAppUrl: "is241s07-dev-app-chart.is241.svc"
+      - replicaCount: {{ default .Environment.Values.REPLICA_COUNT 1 }}
+      - owner: {{ default .Environment.Values.APP_OWNER "" }}
+      - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
+      - externalAppUrl: {{ .Environment.Values.externalAppUrl | quote }}
       - ciliumNetworkPolicy:
           enabled: true
           allowCluster: true
           peers:
-            - namespace: is241
-              instance: is241s07-dev
+{{ toYaml .Environment.Values.networkPeers | indent 12 }}
       - ingress:
           enabled: true
           className: hawk-dev
-          annotations:
-            traefik.ingress.kubernetes.io/router.middlewares: "iv222-app-dev-hawk-chart-headers@kubernetescrd"
-            traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-            traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
             - host: "iv222s03-dev.hawk-dev.csc.sibsutis.ru"
               paths:
@@ -41,31 +40,27 @@ releases:
                   pathType: Prefix
 
   - name: app-prod
+    installed: {{ eq .Environment.Name "prod" }}
     namespace: iv222
     chart: ./hawk-chart
-    createNamespace: false
     labels:
       env: prod
     values:
       - image:
           repository: {{ env "HAWK_REGISTRY_IMAGE" | quote }}
           tag: {{ requiredEnv "IMAGE_TAG" | quote }}
-      - replicaCount: 2
-      - owner: "iv222"
-      - externalAppUrl: "is241s07-prod-app-chart.is241.svc"
+      - replicaCount: {{ default .Environment.Values.REPLICA_COUNT 1 }}
+      - owner: {{ default .Environment.Values.APP_OWNER "" }}
+      - deployTimestamp: {{ default .Environment.Values.DEPLOY_TIMESTAMP "" }}
+      - externalAppUrl: {{ .Environment.Values.externalAppUrl | quote }}
       - ciliumNetworkPolicy:
           enabled: true
           allowCluster: true
           peers:
-            - namespace: is241
-              instance: is241s07-prod
+{{ toYaml .Environment.Values.networkPeers | indent 12 }}
       - ingress:
           enabled: true
           className: hawk-dev
-          annotations:
-            traefik.ingress.kubernetes.io/router.middlewares: "iv222-app-prod-hawk-chart-headers@kubernetescrd"
-            traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-            traefik.ingress.kubernetes.io/router.tls: "true"
           hosts:
             - host: "iv222s03-prod.hawk-dev.csc.sibsutis.ru"
               paths:
