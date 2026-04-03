@@ -13,38 +13,32 @@ spec:
   ingress:
     {{- if .Values.ciliumNetworkPolicy.allowCluster }}
     - fromEntities:
-        - cluster
-      toPorts:
-        - ports:
-            - port: {{ $.Values.service.port | quote }}
-              protocol: TCP
+      - cluster
     {{- end }}
     {{- range .Values.ciliumNetworkPolicy.peers }}
     - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: {{ .namespace | quote }}
-            app.kubernetes.io/name: {{ .name | quote }}
-            app.kubernetes.io/instance: {{ .instance | quote }}
+      - matchLabels:
+          k8s:io.kubernetes.pod.namespace: {{ .namespace | quote }}
+          app.kubernetes.io/instance: {{ .instance | quote }}
       toPorts:
-        - ports:
-            - port: {{ $.Values.service.port | quote }}
-              protocol: TCP
+      - ports:
+        - port: {{ $.Values.service.port | quote }}
+          protocol: TCP
     {{- end }}
 
   egress:
     {{- if .Values.ciliumNetworkPolicy.allowCluster }}
     - toEntities:
-        - cluster
+      - cluster
     {{- end }}
     {{- range .Values.ciliumNetworkPolicy.peers }}
     - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: {{ .namespace | quote }}
-            app.kubernetes.io/name: {{ .name | quote }}
-            app.kubernetes.io/instance: {{ .instance | quote }}
+      - matchLabels:
+          k8s:io.kubernetes.pod.namespace: {{ .namespace | quote }}
+          app.kubernetes.io/instance: {{ .instance | quote }}
       toPorts:
-        - ports:
-            - port: {{ $.Values.service.port | quote }}
-              protocol: TCP
+      - ports:
+        - port: {{ $.Values.service.port | quote }}
+          protocol: TCP
     {{- end }}
 {{- end }}
