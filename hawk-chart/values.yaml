@@ -43,11 +43,7 @@ ingress:
   enabled: true
   className: "hawk-dev"
   annotations: {}
-  hosts:
-    - host: "iv222s03.hawk.csc.sibsutis.ru"
-      paths:
-        - path: /
-          pathType: Prefix
+  hosts: []
   tls: []
 
 httpRoute:
