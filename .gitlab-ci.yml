@@ -29,7 +29,21 @@ build-and-push:
       fi
       echo "IMAGE_TAG (before_script)=$IMAGE_TAG"
     - apk add docker bash curl git
-    - curl -L https://github.com/helmfile/helmfile/releases/download/v1.4.1/helmfile_1.4.1_linux_amd64.tar.gz -o helmfile_1.4.1_linux_amd64.tar.gz
+    - |
+      ARCH="$(uname -m)"
+      case "$ARCH" in
+        aarch64|arm64)
+          HELMFILE_ARCH="arm64"
+          ;;
+        x86_64|amd64)
+          HELMFILE_ARCH="amd64"
+          ;;
+        *)
+          echo "Unsupported architecture: $ARCH"
+          exit 1
+          ;;
+      esac
+    - curl -L "https://github.com/helmfile/helmfile/releases/download/v1.4.1/helmfile_1.4.1_linux_${HELMFILE_ARCH}.tar.gz" -o helmfile.tar.gz
     - tar -xzf helmfile_1.4.1_linux_amd64.tar.gz
     - mv helmfile /usr/local/bin/
     - chmod +x /usr/local/bin/helmfile
