@@ -44,7 +44,7 @@ build-and-push:
           ;;
       esac
     - curl -L "https://github.com/helmfile/helmfile/releases/download/v1.4.1/helmfile_1.4.1_linux_${HELMFILE_ARCH}.tar.gz" -o helmfile.tar.gz
-    - tar -xzf helmfile_1.4.1_linux_amd64.tar.gz
+    - tar -xzf helmfile.tar.gz
     - mv helmfile /usr/local/bin/
     - chmod +x /usr/local/bin/helmfile
     - helmfile -v
